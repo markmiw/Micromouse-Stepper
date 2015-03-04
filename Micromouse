@@ -1,0 +1,216 @@
+/*
+ * File:   Micromouse.c
+ * Author: Un_Farad_Vantage
+ *
+ * Created on February 5, 2015, 11:09 AM
+ */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pic18f4620.h>
+#include <time.h>
+//#include "timer.h"
+//#include "motor.h"
+#include <xc.h>
+#define _XTAL_FREQ 32000000
+
+
+#pragma config OSC = INTIO67    // Oscillator Selection bits (Internal oscillator block, port function on RA6 and RA7)
+#pragma config FCMEN = OFF      // Fail-Safe Clock Monitor Enable bit (Fail-Safe Clock Monitor disabled)
+#pragma config IESO = OFF       // Internal/External Oscillator Switchover bit (Oscillator Switchover mode disabled)
+
+// CONFIG2L
+#pragma config PWRT = OFF       // Power-up Timer Enable bit (PWRT disabled)
+#pragma config BOREN = SBORDIS  // Brown-out Reset Enable bits (Brown-out Reset enabled in hardware only (SBOREN is disabled))
+#pragma config BORV = 3         // Brown Out Reset Voltage bits (Minimum setting)
+
+// CONFIG2H
+#pragma config WDT = OFF        // Watchdog Timer Enable bit (WDT disabled (control is placed on the SWDTEN bit))
+#pragma config WDTPS = 32768    // Watchdog Timer Postscale Select bits (1:32768)
+
+// CONFIG3H
+#pragma config CCP2MX = PORTC   // CCP2 MUX bit (CCP2 input/output is multiplexed with RC1)
+#pragma config PBADEN = OFF     // PORTB A/D Enable bit (PORTB<4:0> pins are configured as digital I/O on Reset)
+#pragma config LPT1OSC = OFF    // Low-Power Timer1 Oscillator Enable bit (Timer1 configured for higher power operation)
+#pragma config MCLRE = OFF      // MCLR Pin Enable bit (RE3 input pin enabled; MCLR disabled)
+
+// CONFIG4L
+#pragma config STVREN = ON      // Stack Full/Underflow Reset Enable bit (Stack full/underflow will cause Reset)
+#pragma config LVP = ON         // Single-Supply ICSP Enable bit (Single-Supply ICSP enabled)
+#pragma config XINST = OFF      // Extended Instruction Set Enable bit (Instruction set extension and Indexed Addressing mode disabled (Legacy mode))
+
+// CONFIG5L
+#pragma config CP0 = OFF        // Code Protection bit (Block 0 (000800-003FFFh) not code-protected)
+#pragma config CP1 = OFF        // Code Protection bit (Block 1 (004000-007FFFh) not code-protected)
+#pragma config CP2 = OFF        // Code Protection bit (Block 2 (008000-00BFFFh) not code-protected)
+#pragma config CP3 = OFF        // Code Protection bit (Block 3 (00C000-00FFFFh) not code-protected)
+
+// CONFIG5H
+#pragma config CPB = OFF        // Boot Block Code Protection bit (Boot block (000000-0007FFh) not code-protected)
+#pragma config CPD = OFF        // Data EEPROM Code Protection bit (Data EEPROM not code-protected)
+
+// CONFIG6L
+#pragma config WRT0 = OFF       // Write Protection bit (Block 0 (000800-003FFFh) not write-protected)
+#pragma config WRT1 = OFF       // Write Protection bit (Block 1 (004000-007FFFh) not write-protected)
+#pragma config WRT2 = OFF       // Write Protection bit (Block 2 (008000-00BFFFh) not write-protected)
+#pragma config WRT3 = OFF       // Write Protection bit (Block 3 (00C000-00FFFFh) not write-protected)
+
+// CONFIG6H
+#pragma config WRTC = OFF       // Configuration Register Write Protection bit (Configuration registers (300000-3000FFh) not write-protected)
+#pragma config WRTB = OFF       // Boot Block Write Protection bit (Boot Block (000000-0007FFh) not write-protected)
+#pragma config WRTD = OFF       // Data EEPROM Write Protection bit (Data EEPROM not write-protected)
+
+// CONFIG7L
+#pragma config EBTR0 = OFF      // Table Read Protection bit (Block 0 (000800-003FFFh) not protected from table reads executed in other blocks)
+#pragma config EBTR1 = OFF      // Table Read Protection bit (Block 1 (004000-007FFFh) not protected from table reads executed in other blocks)
+#pragma config EBTR2 = OFF      // Table Read Protection bit (Block 2 (008000-00BFFFh) not protected from table reads executed in other blocks)
+#pragma config EBTR3 = OFF      // Table Read Protection bit (Block 3 (00C000-00FFFFh) not protected from table reads executed in other blocks)
+
+// CONFIG7H
+#pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot Block (000000-0007FFh) not protected from table reads executed in other blocks)
+
+//void high_priority interrupt high_isr(void);
+//void low_priority interrupt low_isr(void);
+
+
+int delay_time = 0;
+
+void delay(unsigned int ms) {
+    int x = 0;
+    for (x = 0; x < ms; x++)
+        __delay_us(1);
+}
+
+
+void interrupt isr( )
+{
+
+
+
+
+    //Timer0
+    if(INTCONbits.TMR0IF == 1)
+    {
+        INTCONbits.TMR0IF = 0;
+        if(PORTCbits.RC0 == 0)
+            PORTCbits.RC0 = 1;
+        else{
+            PORTCbits.RC0 = 0;}
+
+        T0CONbits.TMR0ON = 1;
+    }
+    //Timer 1
+    if(PIR1bits.TMR1IF == 1)
+    {
+        PIR1bits.TMR1IF == 0;
+        if(PORTDbits.RD5 == 1)
+            PORTDbits.RD5 = 0;
+        else{
+            PORTDbits.RD5 = 0;
+        }
+        T1CONbits.TMR1ON = 1;
+}
+    //Timer 3
+
+     if(PIR2bits.TMR3IF == 1)
+    {
+        PIR2bits.TMR3IF == 0;
+        if(PORTEbits.RE1 == 1)
+            PORTEbits.RE1 = 0;
+        else{
+            PORTEbits.RE1 = 0;
+        }
+        T3CONbits.TMR3ON = 1;
+}
+
+
+}
+int main(int argc, char** argv) {
+    //enable 8MHz internal clock
+    OSCCON = 0b01111100;
+    //enable internal PLL clock = 32MHz
+    OSCTUNE = 0b01001111;
+
+//Set Input/Output
+    TRISC = 0b00000000;
+    TRISB = 0b00000000;
+    TRISE = 0b00000000;
+    TRISD = 0b00000000;
+
+
+
+//Timer Interrupt Formula
+    //Period = (4/FOSC)*Prescaler*(Resolution-Preload)
+    // Period = (4/32000000)*Prescaler*(65536 - Preload)
+    //Enable the Timer 0 interrupt
+
+
+    RCONbits.IPEN = 0;
+
+    // Timer0 Configuration Bits
+    T0CONbits.TMR0ON = 0;
+    T0CONbits.T08BIT = 1;
+    T0CONbits.T0CS = 0;
+    T0CONbits.T0SE = 0;
+    T0CONbits.PSA = 0;
+    T0CONbits.T0PS2 = 0;
+    T0CONbits.T0PS1 = 1;
+    T0CONbits.T0PS0 = 0;
+
+    // Timer1 Configuration Bits
+    T1CONbits.RD16 = 1;      //read/write 16 bit values
+    T1CONbits.T1CKPS1 = 1;    //1:2 prescaler
+    T1CONbits.T1CKPS0 = 0;
+    T1CONbits.T1OSCEN = 0;  //oscillator shut off
+    T1CONbits.TMR1CS = 0;   //user internal clock (Fosc/4)
+    PIE1bits.TMR1IE = 1;    //enable timer1 interrupt on overflow
+    IPR1bits.TMR1IP = 0;    //non high priority interrupt
+    TMR1H = 0b110001111000000;           //Preload at 25356
+    TMR1L = 0;
+
+    //Timer3 Configuration Bits
+    T3CONbits.RD16 = 1;      //read/write 16 bit values
+    T3CONbits.T3CKPS1 = 1;    //1:2 prescaler
+    T3CONbits.T3CKPS0 = 0;
+    T3CONbits.T3SYNC = 1;  //Do not sync external clock
+    T3CONbits.TMR3CS = 0;   //user internal clock (Fosc/4)
+    PIE2bits.TMR3IE = 1;    //enable timer1 interrupt on overflow
+    IPR2bits.TMR3IP = 0;    //non high priority interrupt
+    TMR1H = 0b110001111000000           //Preload at 25356
+    TMR1L = 0;
+
+    // Interrupt Configuration Bits
+    INTCONbits.GIE = 1;
+    INTCONbits.PEIE = 0;
+    INTCONbits.TMR0IE = 1;
+    INTCONbits.INT0IE = 0;
+    INTCONbits.RBIE = 0;
+    INTCONbits.TMR0IF = 0; // Needs to be reset every flag
+    PIR1bits.TMR1IF = 0; // Needs to be reset every flag
+    PIR2bits.TMR3IF = 0;    //clear interrupt flag
+
+    PORTCbits.RC3 = 0;
+    PORTCbits.RC2 = 0;
+    PORTDbits.RD0 = 0;
+    PORTDbits.RD1 = 0;
+    ///////////////////////
+    // Main Program Loop //
+    ///////////////////////
+
+    // Turn TMR0 on
+    T0CONbits.TMR0ON = 1;
+
+    //Turn TMR1 on
+    T1CONbits.TMR1ON = 1;
+
+    //Turn TMR3 on
+    T3CONbits.TMR3ON = 1;
+    
+
+    while(1)
+    {
+       
+
+}
+}
